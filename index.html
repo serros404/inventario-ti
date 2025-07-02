@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Inventário de TI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Adicionando bibliotecas para PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --info: #2980b9;
+      --light-bg: #f8f9fa;
+      --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      --danger: #e74c3c;
+      --pdf: #e74c3c;
+    }
+
+    body {
+      background-color: #f5f7fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    body>.container {
+      flex: 1;
+      padding-top: 20px;
+      padding-bottom: 40px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 1.5rem 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      border: none;
+      transition: transform 0.3s;
+      margin-bottom: 1.5rem;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--primary), var(--info));
+      color: white;
+      font-weight: 600;
+      border-radius: 10px 10px 0 0 !important;
+    }
+
+    .nav-tabs .nav-link {
+      color: var(--primary);
+      font-weight: 600;
+      border: none;
+      padding: 1rem 1.5rem;
+    }
+
+    .nav-tabs .nav-link.active {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-card {
+      border-left: 4px solid var(--success);
+    }
+
+    .stats-card {
+      border-left: 4px solid var(--info);
+    }
+
+    .btn-action {
+      margin: 0 3px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-title {
+      color: var(--primary);
+      border-bottom: 2px solid var(--secondary);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .equipment-row:hover {
+      background-color: rgba(52, 152, 219, 0.05);
+    }
+
+    /* RODAPÉ APRIMORADO */
+    .footer {
+      background-color: var(--primary);
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0.8rem 0;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 40px;
+    }
+
+    .footer .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer p {
+      margin: 0;
+      padding: 5px 15px;
+    }
+
+    .equipment-img {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+    }
+
+    .btn-export {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      border: none;
+      color: white;
+    }
+
+    .btn-pdf {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      border: none;
+      color: white;
+    }
+
+    .btn-summary-pdf {
+      background: linear-gradient(135deg, var(--pdf), #c0392b);
+  border: none;
+  color: white;
+    }
+
+    .btn-import {
+      background: linear-gradient(135deg, #e67e22, #f39c12);
+      border: none;
+      color: white;
+    }
+
+    .btn-reset {
+      background: linear-gradient(135deg, var(--danger), #c0392b);
+      border: none;
+      color: white;
+    }
+
+    .btn-reset-all {
+      background: linear-gradient(135deg, #8e44ad, #9b59b6);
+      border: none;
+      color: white;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      border: none;
+      color: white;
+    }
+
+    .equipment-badge {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      background-color: #e9f7fe;
+      color: #2980b9;
+      border: 1px solid #aed6f1;
+      margin-bottom: 0.5rem;
+    }
+
+    .equipment-total {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #2c3e50;
+      margin-left: 10px;
+    }
+
+    .stats-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .stats-label {
+      font-size: 0.9rem;
+      color: #7f8c8d;
+    }
+
+    .stats-card-item {
+      border-right: 1px solid #eee;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .quantity-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quantity-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .decrement-btn {
+      background-color: white;
+      color: #4097fe;
+    }
+
+    .increment-btn {
+      background-color: white;
+      color: #4097fe;
+    }
+
+    .quantity-value {
+      min-width: 40px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .polo-highlight {
+      background-color: #e9f7fe;
+      border-left: 4px solid #3498db;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .equipment-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: transform 0.2s;
+    }
+
+    .equipment-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .equipment-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .total-badge {
+      font-size: 1.5rem;
+      padding: 8px 16px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      font-weight: bold;
+      margin-top: 10px;
+      display: inline-block;
+    }
+
+    .polo-total {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2c3e50;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .polo-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+
+    .remove-sector-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      padding: 10px;
+    }
+
+    /* Loading spinner para geração de PDF */
+    .pdf-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      flex-direction: column;
+      color: white;
+    }
+
+    .spinner-border {
+      width: 5rem;
+      height: 5rem;
+    }
+
+    /* Elemento oculto para geração do PDF */
+    #pdf-summary-container {
+      position: absolute;
+      left: -9999px;
+      width: 800px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .nav-tabs .nav-link {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .stats-value {
+        font-size: 1.5rem;
+      }
+
+      .quantity-btn {
+        width: 25px;
+        height: 25px;
+        font-size: 0.9rem;
+      }
+
+      .quantity-value {
+        min-width: 30px;
+        font-size: 1rem;
+      }
+
+      /* RESPONSIVIDADE DO RODAPÉ */
+      .footer {
+        font-size: 0.85rem;
+        padding: 0.7rem 0;
+      }
+
+      .footer .container {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .btn-reset-all,
+      .btn-reset {
+        font-size: 0.85rem;
+      }
+    }
+
+    th,
+    td {
+      text-align: center;
+      vertical-align: middle;
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+
+    .equipment-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .equipment-menu li {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: 1rem;
+      color: #2c3e50;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .equipment-menu li:hover {
+      background-color: rgba(52, 152, 219, 0.1);
+      border-radius: 6px;
+    }
+
+    .equipment-menu li i {
+      margin-right: 10px;
+      min-width: 20px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    .alert-danger {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+
+    .reset-warning {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header text-center">
+    <div class="container">
+      <h1><i class="fas fa-laptop-code me-2"></i>Sistema de Inventário de TI</h1>
+      <p class="mb-0">Bellinzoni® 2025</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="poloTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#coelho">Coelho da Rocha</button></li>
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#belford">Belford Roxo</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#saojoao">São João</button></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="belford">
+        <div class="polo-content" data-polo="Belford Roxo"></div>
+      </div>
+      <div class="tab-pane fade" id="coelho">
+        <div class="polo-content" data-polo="Coelho da Rocha"></div>
+      </div>
+      <div class="tab-pane fade" id="saojoao">
+        <div class="polo-content" data-polo="São João"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer mt-4">
+    <div class="container text-center">
+      Dados salvos localmente | Última atualização: <span id="last-update"></span>
+    </div>
+  </footer>
+
+  <!-- Container oculto para gerar o PDF -->
+  <div id="pdf-summary-container"></div>
+
+  <!-- Templates -->
+  <template id="sector-management-template">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="fas fa-building me-2"></i>Gerenciamento de Setores
+      </div>
+      <div class="card-body">
+        <div class="reset-warning mb-3">
+          <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+          <strong>Atualização de Setores:</strong> Os setores padrão foram atualizados.
+          Se os setores não correspondem à nova configuração, use o botão "Resetar Tudo".
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6 mb-2">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Nome do setor" id="sector-name">
+              <button class="btn btn-success" id="add-sector-btn"><i class="fas fa-plus me-1"></i> Adicionar Setor</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex flex-wrap gap-2">
+              <button class="btn btn-export" id="export-excel-btn">
+                <i class="fas fa-file-excel me-1"></i> Exportar Excel
+              </button>
+              <button class="btn btn-export" id="export-csv-btn">
+                <i class="fas fa-file-csv me-1"></i> Exportar CSV
+              </button>
+              <button class="btn btn-summary-pdf" id="export-summary-pdf-btn">
+                <i class="fas fa-file-contract me-1"></i> Exportar Resumo PDF
+              </button>
+              <button class="btn btn-reset-all" id="reset-all-btn">
+                <i class="fas fa-broom me-1"></i> Resetar Tudo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i> Setores atuais: <span id="current-sectors"></span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Aqui alteramos o template para usar classe e table-responsive -->
+  <template id="inventory-table-template">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="fas fa-table me-2"></i> Tabela de Inventário
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover inventory-table">
+            <thead>
+              <tr>
+                <th>Equipamento</th>
+                <!-- cabeçalhos de setores vão ser empurrados pelo JS -->
+              </tr>
+            </thead>
+            <tbody>
+              <!-- linhas de equipamento idem -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="summary-template">
+    <div class="card summary-card mb-4">
+      <div class="card-header">
+        <i class="fas fa-clipboard-list me-2"></i>Resumo do Inventário
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <h5 class="card-title">Total de Equipamentos</h5>
+                <p class="display-4 text-success" id="total-equipment">0</p>
+                <p class="text-muted">No polo atual</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <h5 class="card-title">Setores Cadastrados</h5>
+                <p class="display-4 text-primary" id="total-sectors">0</p>
+                <p class="text-muted">No polo atual</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card bg-light h-100">
+              <div class="card-body">
+                <h5 class="card-title text-center mb-3">Equipamentos por Tipo</h5>
+                <div class="d-flex flex-wrap justify-content-center gap-2" id="equipment-by-type">
+                  <!-- Lista será preenchida dinamicamente -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="stats-template">
+    <div class="card stats-card">
+      <div class="card-header">
+        <i class="fas fa-chart-bar me-2"></i>Estatísticas Gerais
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 col-6 mb-3 stats-card-item">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="stats-value text-primary">3</div>
+                <div class="stats-label">Polos</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6 mb-3 stats-card-item">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="stats-value text-success" id="global-sectors">0</div>
+                <div class="stats-label">Setores</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6 mb-3 stats-card-item">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="stats-value text-info" id="global-equipment">0</div>
+                <div class="stats-label">Equipamentos</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center">
+                <div class="stats-value text-warning" id="avg-equipment">0.0</div>
+                <div class="stats-label">Média/Setor</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <h5 class="text-center mb-4">Total de Equipamentos por Polo</h5>
+            <div class="row" id="equipment-by-polo">
+              <!-- Lista será preenchida dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <div class="col-12">
+            <h5 class="text-center mb-4">Total de Equipamentos por Tipo</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-3" id="equipment-by-type-global">
+              <!-- Lista será preenchida dinamicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Constantes permanecem as mesmas
+    const EQUIPMENT_TYPES = [
+      'Monitores', 'Desktops', 'Notebooks',
+      'Celulares', 'Ramais', 'Impressoras',
+      'Mouses', 'Teclados', 'Fones'
+    ];
+
+    const INITIAL_SECTORS = {
+      'Belford Roxo': ['Logística', 'Expedição'],
+      'Coelho da Rocha': ['Comercial/Var', 'Comercial/Pro', 'Financeiro', 'Marketing', 'PCP', 'Produção', 'Compras/Qua', 'Lab/Des', 'Lab/Qua', 'TI', 'Diretoria', 'RH', 'Estoque'],
+      'São João': ['Produção']
+    };
+
+    const EQUIPMENT_ICONS = {
+      'Monitores': 'fas fa-desktop', 'Desktops': 'fas fa-computer', 'Notebooks': 'fas fa-laptop',
+      'Celulares': 'fas fa-mobile-alt', 'Ramais': 'fas fa-phone-alt', 'Impressoras': 'fas fa-print',
+      'Mouses': 'fas fa-mouse', 'Teclados': 'fas fa-keyboard', 'Fones': 'fas fa-headphones'
+    };
+
+    const POLO_COLORS = {
+      'Belford Roxo': '#3498db',
+      'Coelho da Rocha': '#e74c3c',
+      'São João': '#2ecc71'
+    };
+
+    const DATA_VERSION = '2.0';
+
+    class InventoryApp {
+      constructor() {
+        this.currentPolo = localStorage.getItem('activePolo') || 'Belford Roxo';
+        this.data = this.loadData();
+        this.initialize();
+        this.updateLastModified();
+      }
+
+      initialize() {
+        this.setupEventListeners();
+        this.renderAll();
+        this.updateGlobalStats();
+        this.activateCurrentTab();
+      }
+
+      activateCurrentTab() {
+        setTimeout(() => {
+          document.querySelectorAll('#poloTabs button').forEach(btn => {
+            const tgt = btn.getAttribute('data-bs-target');
+            const polo = tgt === '#belford' ? 'Belford Roxo'
+              : tgt === '#coelho' ? 'Coelho da Rocha'
+                : 'São João';
+            btn.classList.toggle('active', polo === this.currentPolo);
+            const tabPane = document.querySelector(tgt);
+            tabPane.classList.toggle('show', polo === this.currentPolo);
+            tabPane.classList.toggle('active', polo === this.currentPolo);
+          });
+        }, 50);
+      }
+
+      loadData() {
+        const saved = localStorage.getItem('inventoryData');
+        const ver = localStorage.getItem('dataVersion');
+        if (saved && ver !== DATA_VERSION) {
+          localStorage.removeItem('inventoryData');
+          localStorage.setItem('dataVersion', DATA_VERSION);
+          return this.initializeData();
+        }
+        return saved ? JSON.parse(saved) : this.initializeData();
+      }
+
+      initializeData() {
+        const data = {};
+        for (const polo in INITIAL_SECTORS) {
+          data[polo] = { sectors: [...INITIAL_SECTORS[polo]], equipment: {} };
+          for (const eq of EQUIPMENT_TYPES) {
+            data[polo].equipment[eq] = {};
+            for (const sec of INITIAL_SECTORS[polo]) {
+              data[polo].equipment[eq][sec] = 0;
+            }
+          }
+        }
+        localStorage.setItem('dataVersion', DATA_VERSION);
+        return data;
+      }
+
+      saveData() {
+        localStorage.setItem('inventoryData', JSON.stringify(this.data));
+        localStorage.setItem('activePolo', this.currentPolo);
+        this.updateLastModified();
+        this.updateGlobalStats();
+      }
+
+      updateLastModified() {
+        const now = new Date();
+        document.getElementById('last-update').textContent =
+          now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+      }
+
+      setupEventListeners() {
+        // Troca de polos
+        document.querySelectorAll('#poloTabs button').forEach(btn => {
+          btn.addEventListener('shown.bs.tab', e => {
+            const tgt = e.target.getAttribute('data-bs-target');
+            this.currentPolo = tgt === '#belford' ? 'Belford Roxo'
+              : tgt === '#coelho' ? 'Coelho da Rocha'
+                : 'São João';
+            this.saveData();
+            this.renderAll();
+          });
+        });
+
+        // Delegação de cliques (incremento/decremento etc)
+        document.addEventListener('click', e => {
+          const pc = document.querySelector(`.polo-content[data-polo="${this.currentPolo}"]`);
+
+          if (e.target.closest('#add-sector-btn')) {
+            const name = pc.querySelector('#sector-name').value.trim();
+            if (name) this.addSector(name);
+          }
+          if (e.target.closest('#export-excel-btn')) this.exportToExcel();
+          if (e.target.closest('#export-csv-btn')) this.exportToCSV();
+          if (e.target.closest('#export-summary-pdf-btn')) this.exportSummaryToPDF();
+          if (e.target.closest('#reset-all-btn') &&
+            confirm('Isso apagará TODOS os dados do inventário. Tem certeza?')) {
+            this.resetAllData();
+          }
+          if (e.target.closest('.quantity-btn')) {
+            const btn = e.target.closest('.quantity-btn');
+            const cell = btn.closest('td');
+            let val = parseInt(cell.querySelector('.quantity-value').textContent) || 0;
+            if (btn.classList.contains('increment-btn')) val++;
+            else if (val > 0) val--;
+            cell.querySelector('.quantity-value').textContent = val;
+            this.updateQuantity(cell.dataset.equipment, cell.dataset.sector, val);
+          }
+        });
+      }
+
+      resetAllData() {
+        localStorage.removeItem('inventoryData');
+        this.data = this.initializeData();
+        this.saveData();
+        this.renderAll();
+        this.showAlert('Todos os dados foram resetados!', 'success');
+      }
+
+      renderAll() {
+        const pc = document.querySelector(`.polo-content[data-polo="${this.currentPolo}"]`);
+        if (!pc) return;
+        pc.innerHTML = '';
+        pc.appendChild(this.renderSectorManagement());
+        pc.appendChild(this.renderInventoryTable());
+        pc.appendChild(this.renderSummary());
+        pc.appendChild(this.renderStatsTemplate());
+        this.updateSummary();
+      }
+
+      renderSectorManagement() {
+        const tpl = document.getElementById('sector-management-template').content.cloneNode(true);
+        tpl.querySelector('#current-sectors').textContent = this.data[this.currentPolo].sectors.join(', ');
+        return tpl;
+      }
+
+      renderInventoryTable() {
+        const tpl = document.getElementById('inventory-table-template').content.cloneNode(true);
+        const table = tpl.querySelector('.inventory-table');
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+        const secs = this.data[this.currentPolo].sectors;
+
+        // Cabeçalhos de setor
+        secs.forEach(sec => {
+          const th = document.createElement('th');
+          th.textContent = sec;
+          thead.appendChild(th);
+        });
+
+        // Linhas de equipamentos
+        EQUIPMENT_TYPES.forEach(eq => {
+          const tr = document.createElement('tr');
+          tr.className = 'equipment-row';
+          // célula do nome + ícone
+          const td0 = document.createElement('td');
+          td0.innerHTML = `<i class="${EQUIPMENT_ICONS[eq]} me-2"></i>${eq}`;
+          tr.appendChild(td0);
+          // células de quantidade
+          secs.forEach(sec => {
+            const td = document.createElement('td');
+            td.dataset.equipment = eq;
+            td.dataset.sector = sec;
+            const v = this.data[this.currentPolo].equipment[eq][sec] || 0;
+            td.innerHTML = `
+              <div class="quantity-control d-flex align-items-center">
+                <button class="quantity-btn decrement-btn btn btn-sm">-</button>
+                <span class="quantity-value mx-2">${v}</span>
+                <button class="quantity-btn increment-btn btn btn-sm">+</button>
+              </div>`;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+
+        return tpl;
+      }
+
+      renderSummary() {
+        return document.getElementById('summary-template').content.cloneNode(true);
+      }
+
+      renderStatsTemplate() {
+        return document.getElementById('stats-template').content.cloneNode(true);
+      }
+
+      updateSummary() {
+        const pc = document.querySelector(`.polo-content[data-polo="${this.currentPolo}"]`);
+        if (!pc) return;
+
+        const secs = this.data[this.currentPolo].sectors;
+        let total = 0;
+        const counts = {};
+
+        EQUIPMENT_TYPES.forEach(eq => {
+          counts[eq] = 0;
+          secs.forEach(sec => {
+            const c = this.data[this.currentPolo].equipment[eq][sec] || 0;
+            counts[eq] += c;
+            total += c;
+          });
+        });
+
+        pc.querySelector('#total-equipment').textContent = total;
+        pc.querySelector('#total-sectors').textContent = secs.length;
+
+        const wrap = pc.querySelector('#equipment-by-type');
+        wrap.innerHTML = '';
+
+        for (const [eq, c] of Object.entries(counts)) {
+          const div = document.createElement('div');
+          div.className = 'equipment-badge d-flex justify-content-between align-items-center';
+          div.innerHTML = `
+            <div><i class="${EQUIPMENT_ICONS[eq]} me-2"></i>${eq}</div>
+            <span class="equipment-total">${c}</span>`;
+          wrap.appendChild(div);
+        }
+      }
+
+      updateGlobalStats() {
+        let totalSectors = 0;
+        let totalEquipment = 0;
+        const poloEquipment = {};
+        const globalEquipmentCount = {};
+
+        // Inicializa contadores
+        EQUIPMENT_TYPES.forEach(eq => {
+          globalEquipmentCount[eq] = 0;
+        });
+
+        for (const polo in this.data) {
+          poloEquipment[polo] = 0;
+          totalSectors += this.data[polo].sectors.length;
+
+          for (const equipment of EQUIPMENT_TYPES) {
+            for (const sector of this.data[polo].sectors) {
+              const count = this.data[polo].equipment[equipment][sector] || 0;
+              poloEquipment[polo] += count;
+              totalEquipment += count;
+              globalEquipmentCount[equipment] += count;
+            }
+          }
+        }
+
+        const avgEquipment = totalSectors > 0 ? (totalEquipment / totalSectors).toFixed(1) : 0;
+
+        // Atualiza elementos
+        const globalSectorsEl = document.getElementById('global-sectors');
+        if (globalSectorsEl) globalSectorsEl.textContent = totalSectors;
+
+        const globalEquipmentEl = document.getElementById('global-equipment');
+        if (globalEquipmentEl) globalEquipmentEl.textContent = totalEquipment;
+
+        const avgEquipmentEl = document.getElementById('avg-equipment');
+        if (avgEquipmentEl) avgEquipmentEl.textContent = avgEquipment;
+
+        // Atualiza equipamentos por polo
+        const poloContainer = document.getElementById('equipment-by-polo');
+        if (poloContainer) {
+          poloContainer.innerHTML = '';
+
+          for (const polo in this.data) {
+            const col = document.createElement('div');
+            col.className = 'col-md-4 mb-3';
+
+            let poloTotal = 0;
+            const equipmentDetails = [];
+
+            EQUIPMENT_TYPES.forEach(equipment => {
+              let equipmentTotal = 0;
+              for (const sector of this.data[polo].sectors) {
+                equipmentTotal += this.data[polo].equipment[equipment][sector] || 0;
+              }
+              poloTotal += equipmentTotal;
+
+              equipmentDetails.push(`
+                <div class="d-flex justify-content-between">
+                  <span><i class="${EQUIPMENT_ICONS[equipment]} me-2"></i>${equipment}</span>
+                  <span class="fw-bold">${equipmentTotal}</span>
+                </div>
+              `);
+            });
+
+            col.innerHTML = `
+              <div class="polo-highlight">
+                <div class="polo-name">${polo}</div>
+                <div class="polo-total">${poloTotal}</div>
+                ${equipmentDetails.join('')}
+              </div>
+            `;
+
+            poloContainer.appendChild(col);
+          }
+        }
+
+        // Atualiza total de equipamentos por tipo (global)
+        const typeContainer = document.getElementById('equipment-by-type-global');
+        if (typeContainer) {
+          typeContainer.innerHTML = '';
+
+          for (const [equipment, count] of Object.entries(globalEquipmentCount)) {
+            const card = document.createElement('div');
+            card.className = 'equipment-card';
+            card.innerHTML = `
+              <div class="equipment-header">
+                <i class="${EQUIPMENT_ICONS[equipment]} me-2" style="color: ${POLO_COLORS['Belford Roxo']}; font-size: 1.5rem;"></i>
+                <h5>${equipment}</h5>
+              </div>
+              <div class="text-center">
+                <div class="total-badge">${count}</div>
+                <div class="text-muted">Total em todos os polos</div>
+              </div>
+            `;
+            typeContainer.appendChild(card);
+          }
+        }
+      }
+
+      // Métodos movidos para dentro da classe
+      addSector(name) {
+        const pd = this.data[this.currentPolo];
+        if (pd.sectors.includes(name)) {
+          this.showAlert('Setor já existe!', 'warning');
+          return;
+        }
+        pd.sectors.push(name);
+        EQUIPMENT_TYPES.forEach(eq => {
+          pd.equipment[eq][name] = 0;
+        });
+        this.saveData();
+        this.renderAll();
+        this.showAlert(`Setor "${name}" adicionado!`, 'success');
+      }
+
+      updateQuantity(eq, sec, val) {
+        this.data[this.currentPolo].equipment[eq][sec] = val;
+        this.saveData();
+        this.updateSummary();
+      }
+
+      exportToExcel() {
+        const wsData = [];
+        const header = ['Equipamento', ...this.data[this.currentPolo].sectors];
+        wsData.push(header);
+
+        EQUIPMENT_TYPES.forEach(equipment => {
+          const row = [equipment];
+          this.data[this.currentPolo].sectors.forEach(sector => {
+            row.push(this.data[this.currentPolo].equipment[equipment][sector] || 0);
+          });
+          wsData.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Inventário');
+        XLSX.writeFile(wb, `inventario_ti_${this.currentPolo.replace(/\s+/g, '_')}.xlsx`);
+        this.showAlert('Dados exportados para Excel com sucesso!', 'success');
+      }
+
+      exportToCSV() {
+        let csvContent = 'Equipamento;' + this.data[this.currentPolo].sectors.join(';') + '\n';
+
+        EQUIPMENT_TYPES.forEach(equipment => {
+          const row = [equipment];
+          this.data[this.currentPolo].sectors.forEach(sector => {
+            row.push(this.data[this.currentPolo].equipment[equipment][sector] || 0);
+          });
+          csvContent += row.join(';') + '\n';
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `inventario_ti_${this.currentPolo.replace(/\s+/g, '_')}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.showAlert('Dados exportados para CSV com sucesso!', 'success');
+      }
+
+      // Função aprimorada para exportar PDF resumido
+      exportSummaryToPDF() {
+        // Criar elemento de loading
+        const loading = document.createElement('div');
+        loading.className = 'pdf-loading';
+        loading.innerHTML = `
+          <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <h3 class="mt-3">Gerando Resumo em PDF...</h3>
+        `;
+        document.body.appendChild(loading);
+
+        // Calcular totais por polo e equipamento
+        const poloData = {};
+        for (const polo in this.data) {
+          poloData[polo] = {};
+          for (const equipment of EQUIPMENT_TYPES) {
+            let total = 0;
+            for (const sector of this.data[polo].sectors) {
+              total += this.data[polo].equipment[equipment][sector] || 0;
+            }
+            poloData[polo][equipment] = total;
+          }
+        }
+
+        // Calcular totais por equipamento globalmente
+        const globalTotals = {};
+        EQUIPMENT_TYPES.forEach(equipment => {
+          globalTotals[equipment] = 0;
+          for (const polo in poloData) {
+            globalTotals[equipment] += poloData[polo][equipment];
+          }
+        });
+
+        // Calcular totais por polo
+        const poloTotals = {};
+        for (const polo in poloData) {
+          poloTotals[polo] = 0;
+          for (const equipment in poloData[polo]) {
+            poloTotals[polo] += poloData[polo][equipment];
+          }
+        }
+
+        // Construir a tabela resumida com todos os dados
+        const pdfContainer = document.getElementById('pdf-summary-container');
+        pdfContainer.innerHTML = `
+          <div class="pdf-summary">
+            <div class="pdf-header text-center mb-4">
+              <h1 style="color: #2c3e50;"><i class="fas fa-laptop-code me-2"></i>Resumo de Inventário de TI</h1>
+              <h3 class="text-muted">Bellinzoni® 2025</h3>
+              <div class="pdf-date" style="color: #7f8c8d; margin-bottom: 20px;">
+                ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+              </div>
+            </div>
+            
+            <h2 class="text-center mb-4" style="color: #2c3e50;">Resumo por Polo</h2>
+            <table class="pdf-table" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+              <thead>
+                <tr style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white;">
+                  <th style="padding: 15px; text-align: left; border-top-left-radius: 10px;">Equipamento</th>
+                  ${Object.keys(this.data).map(polo =>
+          `<th style="padding: 15px; text-align: center;">${polo}</th>`
+        ).join('')}
+                  <th style="padding: 15px; text-align: center; border-top-right-radius: 10px;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${EQUIPMENT_TYPES.map(equipment => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px; font-weight: 500;">
+                      <i class="${EQUIPMENT_ICONS[equipment]} me-2"></i>${equipment}
+                    </td>
+                    ${Object.keys(this.data).map(polo => `
+                      <td style="padding: 15px; text-align: center; font-weight: bold; font-size: 1.1rem;">
+                        ${poloData[polo][equipment]}
+                      </td>
+                    `).join('')}
+                    <td style="padding: 15px; text-align: center; font-weight: bold; font-size: 1.1rem; background-color: #e9f7fe;">
+                      ${globalTotals[equipment]}
+                    </td>
+                  </tr>
+                `).join('')}
+                <tr style="background-color: #f5f7fa; font-weight: bold;">
+                  <td style="padding: 15px; font-size: 1.1rem;">Total por Polo</td>
+                  ${Object.keys(this.data).map(polo => `
+                    <td style="padding: 15px; text-align: center; font-size: 1.1rem;">
+                      ${poloTotals[polo]}
+                    </td>
+                  `).join('')}
+                  <td style="padding: 15px; text-align: center; font-size: 1.1rem; background-color: #d4edda;">
+                    ${Object.values(poloTotals).reduce((a, b) => a + b, 0)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div class="pdf-footer text-center" style="margin-top: 40px; color: #7f8c8d;">
+              <p>Sistema de Inventário de TI - Bellinzoni® 2025</p>
+              <p>Dados atualizados em tempo real</p>
+            </div>
+          </div>
+        `;
+
+        // Capturar o conteúdo do PDF
+        html2canvas(pdfContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true
+        }).then(canvas => {
+          // Configurar PDF
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jspdf.jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          html2canvas(pdfContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true
+          }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jspdf.jsPDF({
+              orientation: 'landscape',
+              unit: 'mm',
+              format: 'a4'
+            });
+
+            // dimensões do PDF e da imagem
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgWidth = pageWidth - 10; // margem de 5mm em cada lado
+            const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+            let heightLeft = imgHeight;
+            let positionY = 5; // margem superior
+
+            // primeira página
+            pdf.addImage(imgData, 'PNG', 5, positionY, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // páginas adicionais
+            while (heightLeft > 0) {
+              pdf.addPage();
+              positionY = heightLeft - imgHeight + 5;
+              pdf.addImage(imgData, 'PNG', 5, positionY, imgWidth, imgHeight);
+              heightLeft -= pageHeight;
+            }
+
+            pdf.save(`resumo_inventario_ti_${new Date().toISOString().slice(0, 10)}.pdf`);
+            document.body.removeChild(loading);
+            this.showAlert('Resumo PDF gerado com sucesso!', 'success');
+          })
+            .catch(error => {
+              console.error('Erro ao gerar PDF:', error);
+              document.body.removeChild(loading);
+              this.showAlert('Erro ao gerar resumo PDF!', 'danger');
+            });
+
+
+          // Adicionar conteúdo principal
+          pdf.addImage(imgData, 'PNG', 5, 15, imgWidth - 10, imgHeight - 10);
+
+          // Salvar PDF
+          pdf.save(`resumo_inventario_ti_${new Date().toISOString().slice(0, 10)}.pdf`);
+
+          // Remover loading
+          document.body.removeChild(loading);
+
+          this.showAlert('Resumo PDF gerado com sucesso!', 'success');
+        }).catch(error => {
+          console.error('Erro ao gerar PDF:', error);
+          document.body.removeChild(loading);
+          this.showAlert('Erro ao gerar resumo PDF!', 'danger');
+        });
+      }
+
+      showAlert(msg, type) {
+        const a = document.createElement('div');
+        a.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        a.style.cssText = 'top:20px;right:20px;z-index:1000;max-width:400px';
+        a.innerHTML = `${msg} <button class="btn-close" data-bs-dismiss="alert"></button>`;
+        document.body.appendChild(a);
+        setTimeout(() => {
+          a.classList.remove('show');
+          setTimeout(() => a.remove(), 150);
+        }, 3000);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new InventoryApp());
+  </script>
+</body>
+
+</html>
