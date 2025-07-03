@@ -11,6 +11,8 @@
   <!-- Adicionando bibliotecas para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Biblioteca para compressão de dados -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <style>
     :root {
       --primary: #2c3e50;
@@ -151,8 +153,8 @@
 
     .btn-summary-pdf {
       background: linear-gradient(135deg, var(--pdf), #c0392b);
-  border: none;
-  color: white;
+      border: none;
+      color: white;
     }
 
     .btn-import {
@@ -658,12 +660,6 @@
       'Mouses', 'Teclados', 'Fones'
     ];
 
-    const INITIAL_SECTORS = {
-      'Belford Roxo': ['Logística', 'Expedição'],
-      'Coelho da Rocha': ['Comercial/Var', 'Comercial/Pro', 'Financeiro', 'Marketing', 'PCP', 'Produção', 'Compras/Qua', 'Lab/Des', 'Lab/Qua', 'TI', 'Diretoria', 'RH', 'Estoque'],
-      'São João': ['Produção']
-    };
-
     const EQUIPMENT_ICONS = {
       'Monitores': 'fas fa-desktop', 'Desktops': 'fas fa-computer', 'Notebooks': 'fas fa-laptop',
       'Celulares': 'fas fa-mobile-alt', 'Ramais': 'fas fa-phone-alt', 'Impressoras': 'fas fa-print',
@@ -677,6 +673,88 @@
     };
 
     const DATA_VERSION = '2.0';
+
+    // DADOS PADRÃO DO INVENTÁRIO
+    const DEFAULT_INVENTORY = {
+      "Belford Roxo": {
+        sectors: ["Logística", "Expedição"],
+        equipment: {
+          "Monitores": { "Logística": 2, "Expedição": 1 },
+          "Desktops": { "Logística": 1, "Expedição": 1 },
+          "Notebooks": { "Logística": 0, "Expedição": 0 },
+          "Celulares": { "Logística": 0, "Expedição": 0 },
+          "Ramais": { "Logística": 0, "Expedição": 0 },
+          "Impressoras": { "Logística": 1, "Expedição": 1 },
+          "Mouses": { "Logística": 1, "Expedição": 1 },
+          "Teclados": { "Logística": 0, "Expedição": 0 },
+          "Fones": { "Logística": 0, "Expedição": 0 }
+        }
+      },
+      "Coelho da Rocha": {
+        sectors: ["Comercial/Var", "Comercial/Pro", "Financeiro", "Marketing", "PCP", "Produção", "Compras/Qua", "Lab/Des", "Lab/Qua", "TI", "Diretoria", "RH", "Estoque"],
+        equipment: {
+          "Monitores": {
+            "Comercial/Var": 5, "Comercial/Pro": 3, "Financeiro": 5, "Marketing": 1,
+            "PCP": 1, "Produção": 0, "Compras/Qua": 0, "Lab/Des": 0, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 2, "RH": 2, "Estoque": 0
+          },
+          "Desktops": {
+            "Comercial/Var": 3, "Comercial/Pro": 2, "Financeiro": 4, "Marketing": 0,
+            "PCP": 1, "Produção": 0, "Compras/Qua": 0, "Lab/Des": 0, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 2, "RH": 1, "Estoque": 0
+          },
+          "Notebooks": {
+            "Comercial/Var": 3, "Comercial/Pro": 2, "Financeiro": 0, "Marketing": 2,
+            "PCP": 2, "Produção": 1, "Compras/Qua": 3, "Lab/Des": 1, "Lab/Qua": 0,
+            "TI": 1, "Diretoria": 0, "RH": 0, "Estoque": 1
+          },
+          "Celulares": {
+            "Comercial/Var": 5, "Comercial/Pro": 3, "Financeiro": 1, "Marketing": 2,
+            "PCP": 1, "Produção": 0, "Compras/Qua": 1, "Lab/Des": 0, "Lab/Qua": 0,
+            "TI": 0, "Diretoria": 2, "RH": 1, "Estoque": 0
+          },
+          "Ramais": {
+            "Comercial/Var": 4, "Comercial/Pro": 3, "Financeiro": 2, "Marketing": 2,
+            "PCP": 1, "Produção": 1, "Compras/Qua": 2, "Lab/Des": 1, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 2, "RH": 1, "Estoque": 0
+          },
+          "Impressoras": {
+            "Comercial/Var": 0, "Comercial/Pro": 0, "Financeiro": 0, "Marketing": 0,
+            "PCP": 1, "Produção": 0, "Compras/Qua": 0, "Lab/Des": 0, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 2, "RH": 0, "Estoque": 2
+          },
+          "Mouses": {
+            "Comercial/Var": 5, "Comercial/Pro": 4, "Financeiro": 3, "Marketing": 2,
+            "PCP": 3, "Produção": 1, "Compras/Qua": 3, "Lab/Des": 1, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 5, "RH": 1, "Estoque": 0
+          },
+          "Teclados": {
+            "Comercial/Var": 4, "Comercial/Pro": 2, "Financeiro": 3, "Marketing": 1,
+            "PCP": 3, "Produção": 1, "Compras/Qua": 3, "Lab/Des": 1, "Lab/Qua": 1,
+            "TI": 0, "Diretoria": 2, "RH": 1, "Estoque": 2
+          },
+          "Fones": {
+            "Comercial/Var": 4, "Comercial/Pro": 0, "Financeiro": 0, "Marketing": 0,
+            "PCP": 0, "Produção": 0, "Compras/Qua": 0, "Lab/Des": 0, "Lab/Qua": 0,
+            "TI": 0, "Diretoria": 0, "RH": 0, "Estoque": 0
+          },
+        }
+      },
+      "São João": {
+        sectors: ["Produção"],
+        equipment: {
+          "Monitores": { "Produção": 0 },
+          "Desktops": { "Produção": 0 },
+          "Notebooks": { "Produção": 0 },
+          "Celulares": { "Produção": 0 },
+          "Ramais": { "Produção": 0 },
+          "Impressoras": { "Produção": 0 },
+          "Mouses": { "Produção": 0 },
+          "Teclados": { "Produção": 0 },
+          "Fones": { "Produção": 0 }
+        }
+      }
+    };
 
     class InventoryApp {
       constructor() {
@@ -709,6 +787,16 @@
       }
 
       loadData() {
+        // Tenta carregar da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const compressedData = urlParams.get('data');
+
+        if (compressedData) {
+          const data = this.decompressData(compressedData);
+          if (data) return data;
+        }
+
+        // Tenta carregar do localStorage
         const saved = localStorage.getItem('inventoryData');
         const ver = localStorage.getItem('dataVersion');
         if (saved && ver !== DATA_VERSION) {
@@ -720,18 +808,7 @@
       }
 
       initializeData() {
-        const data = {};
-        for (const polo in INITIAL_SECTORS) {
-          data[polo] = { sectors: [...INITIAL_SECTORS[polo]], equipment: {} };
-          for (const eq of EQUIPMENT_TYPES) {
-            data[polo].equipment[eq] = {};
-            for (const sec of INITIAL_SECTORS[polo]) {
-              data[polo].equipment[eq][sec] = 0;
-            }
-          }
-        }
-        localStorage.setItem('dataVersion', DATA_VERSION);
-        return data;
+        return JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
       }
 
       saveData() {
@@ -739,12 +816,37 @@
         localStorage.setItem('activePolo', this.currentPolo);
         this.updateLastModified();
         this.updateGlobalStats();
+        this.updateShareableURL();
       }
 
       updateLastModified() {
         const now = new Date();
         document.getElementById('last-update').textContent =
           now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+      }
+
+      // Funções para compressão de dados
+      compressData(data) {
+        const json = JSON.stringify(data);
+        return LZString.compressToEncodedURIComponent(json);
+      }
+
+      decompressData(compressed) {
+        const json = LZString.decompressFromEncodedURIComponent(compressed);
+        return json ? JSON.parse(json) : null;
+      }
+
+      updateShareableURL() {
+        const compressed = this.compressData(this.data);
+
+        // Verifica se a URL não excede o limite
+        if (compressed.length < 2000) {
+          const url = new URL(window.location);
+          url.searchParams.set('data', compressed);
+          window.history.replaceState({}, '', url);
+        } else {
+          console.warn("Dados muito grandes para URL");
+        }
       }
 
       setupEventListeners() {
@@ -775,6 +877,9 @@
             confirm('Isso apagará TODOS os dados do inventário. Tem certeza?')) {
             this.resetAllData();
           }
+          if (e.target.closest('#share-link-btn')) {
+            this.copyShareableLink();
+          }
           if (e.target.closest('.quantity-btn')) {
             const btn = e.target.closest('.quantity-btn');
             const cell = btn.closest('td');
@@ -785,6 +890,12 @@
             this.updateQuantity(cell.dataset.equipment, cell.dataset.sector, val);
           }
         });
+      }
+
+      copyShareableLink() {
+        this.updateShareableURL();
+        navigator.clipboard.writeText(window.location.href);
+        this.showAlert('Link copiado! Cole para compartilhar.', 'success');
       }
 
       resetAllData() {
@@ -809,6 +920,15 @@
       renderSectorManagement() {
         const tpl = document.getElementById('sector-management-template').content.cloneNode(true);
         tpl.querySelector('#current-sectors').textContent = this.data[this.currentPolo].sectors.join(', ');
+
+        // Adiciona o botão de compartilhamento
+        const exportButtons = tpl.querySelector('.d-flex.flex-wrap.gap-2');
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-info';
+        shareBtn.id = 'share-link-btn';
+        shareBtn.innerHTML = '<i class="fas fa-share-alt me-1"></i> Gerar Link Compartilhável';
+        exportButtons.appendChild(shareBtn);
+
         return tpl;
       }
 
@@ -1180,60 +1300,30 @@
             format: 'a4'
           });
 
-          html2canvas(pdfContainer, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true
-          }).then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jspdf.jsPDF({
-              orientation: 'landscape',
-              unit: 'mm',
-              format: 'a4'
-            });
+          // dimensões do PDF e da imagem
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const imgProps = pdf.getImageProperties(imgData);
+          const imgWidth = pageWidth - 10; // margem de 5mm em cada lado
+          const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-            // dimensões do PDF e da imagem
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const imgProps = pdf.getImageProperties(imgData);
-            const imgWidth = pageWidth - 10; // margem de 5mm em cada lado
-            const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+          let heightLeft = imgHeight;
+          let positionY = 5; // margem superior
 
-            let heightLeft = imgHeight;
-            let positionY = 5; // margem superior
+          // primeira página
+          pdf.addImage(imgData, 'PNG', 5, positionY, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
 
-            // primeira página
+          // páginas adicionais
+          while (heightLeft > 0) {
+            pdf.addPage();
+            positionY = heightLeft - imgHeight + 5;
             pdf.addImage(imgData, 'PNG', 5, positionY, imgWidth, imgHeight);
             heightLeft -= pageHeight;
+          }
 
-            // páginas adicionais
-            while (heightLeft > 0) {
-              pdf.addPage();
-              positionY = heightLeft - imgHeight + 5;
-              pdf.addImage(imgData, 'PNG', 5, positionY, imgWidth, imgHeight);
-              heightLeft -= pageHeight;
-            }
-
-            pdf.save(`resumo_inventario_ti_${new Date().toISOString().slice(0, 10)}.pdf`);
-            document.body.removeChild(loading);
-            this.showAlert('Resumo PDF gerado com sucesso!', 'success');
-          })
-            .catch(error => {
-              console.error('Erro ao gerar PDF:', error);
-              document.body.removeChild(loading);
-              this.showAlert('Erro ao gerar resumo PDF!', 'danger');
-            });
-
-
-          // Adicionar conteúdo principal
-          pdf.addImage(imgData, 'PNG', 5, 15, imgWidth - 10, imgHeight - 10);
-
-          // Salvar PDF
           pdf.save(`resumo_inventario_ti_${new Date().toISOString().slice(0, 10)}.pdf`);
-
-          // Remover loading
           document.body.removeChild(loading);
-
           this.showAlert('Resumo PDF gerado com sucesso!', 'success');
         }).catch(error => {
           console.error('Erro ao gerar PDF:', error);
