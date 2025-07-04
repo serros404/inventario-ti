@@ -8,10 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Adicionando bibliotecas para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- Biblioteca para compressão de dados -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <style>
     :root {
@@ -103,10 +101,6 @@
       border-bottom: 2px solid var(--secondary);
       padding-bottom: 0.5rem;
       margin-bottom: 1.5rem;
-    }
-
-    .equipment-row:hover {
-      background-color: rgba(52, 152, 219, 0.05);
     }
 
     /* RODAPÉ APRIMORADO */
@@ -436,6 +430,59 @@
       margin-bottom: 20px;
       border-radius: 4px;
     }
+
+    /* ESTILOS PARA FIXAR A COLUNA DE EQUIPAMENTOS - CORRIGIDO */
+    .table-responsive {
+      overflow-x: auto;
+      position: relative;
+      border-radius: 4px;
+    }
+
+    .inventory-table th:first-child,
+    .inventory-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 100;
+      /* Aumentado de 10 para 100 */
+      background-color: #f8f9fa;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .inventory-table thead th:first-child {
+      z-index: 200;
+      /* Aumentado de 20 para 200 */
+      background-color: #2c3e50;
+      color: white;
+    }
+
+    .inventory-table tbody tr:hover td:first-child {
+      background-color: rgba(52, 152, 219, 0.1);
+      z-index: 101;
+      /* Garante que fique acima durante o hover */
+    }
+
+    /* Melhorias visuais para coluna fixa */
+    .inventory-table td:first-child {
+      min-width: 180px;
+      font-weight: 500;
+      border-right: 1px solid #dee2e6;
+    }
+
+    .inventory-table th:first-child {
+      min-width: 180px;
+      border-right: 1px solid #4a627a;
+    }
+
+    /* Ajuste de espaçamento */
+    .inventory-table td:first-child,
+    .inventory-table th:first-child {
+      padding-left: 20px;
+    }
+
+    /* Melhoria visual para hover */
+    .equipment-row:hover td:not(:first-child) {
+      background-color: rgba(52, 152, 219, 0.05);
+    }
   </style>
 </head>
 
@@ -524,7 +571,6 @@
     </div>
   </template>
 
-  <!-- Aqui alteramos o template para usar classe e table-responsive -->
   <template id="inventory-table-template">
     <div class="card mb-4">
       <div class="card-header">
